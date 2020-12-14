@@ -1,10 +1,9 @@
-const { writeJson, readJson } = require("fs-extra"); //TAKING ASYNC READ/WRITE METHODS FROM FS-EXTRA
+const { writeJson, readJson } = require("fs-extra"); //TAAKES ASYNC READ/WRITE FILE FUNCTIONS FROM FS-EXTRA PACKAGE
 
 const readDB = async (filepath) => {
-  //NEEDS TO USE ASYNC/AWAIT
   try {
-    const fileJson = await readJson(filepath); //READS FILEPATH AS PARAMETER AND RETURNS THE JSON
-    return fileJson;
+    const fileAsJson = await readJson(filepath);
+    return fileAsJson;
   } catch (error) {
     throw new Error(error);
   }
@@ -12,7 +11,7 @@ const readDB = async (filepath) => {
 
 const writeDB = async (filepath, data) => {
   try {
-    await writeJson(filepath, data); //RECEIVES FILEPATH AND DATA, OVERWRITES EXISTING JSON ON FILEPATH WITH DATA PROVIDED
+    await writeJson(filepath, data);
   } catch (error) {
     throw new Error(error);
   }

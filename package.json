@@ -1,20 +1,29 @@
 {
-  "name": "mfived3",
-  "version": "4.2.0",
-  "description": "uhAHHHuh",
+  "name": "M5-D6",
+  "version": "1.0.0",
+  "description": "",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon -r dotenv/config ./src/server.js"
+    "dev": "nodemon ./src/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ASMahmood/M5-D6.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/ASMahmood/M5-D6/issues"
+  },
+  "homepage": "https://github.com/ASMahmood/M5-D6#readme",
   "devDependencies": {
+    "dotenv": "^8.2.0",
     "nodemon": "^2.0.6"
   },
   "dependencies": {
-    "dotenv": "^8.2.0",
+    "cors": "^2.8.5",
     "express": "^4.17.1",
     "express-validator": "^6.8.0",
     "fs-extra": "^9.0.1",

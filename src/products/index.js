@@ -1,142 +1,123 @@
 const express = require("express");
-const { readDB, writeDB } = require("../lib/utilities");
+const fs = require("fs");
 const path = require("path");
 const uniqid = require("uniqid");
-const { check, validationResult } = require("express-validator");
+const reviewsRoutes = require("../reviews");
+
+const { readDB } = require("../lib/utilities");
+
 const router = express.Router();
 
-const productFilePath = path.join(__dirname, "products.json"); //GETTING FILEPATH TO JSON
+router.use("/reviews", reviewsRoutes);
 
-router.get("/", async (req, res, next) => {
+const productsFilePath = path.join(__dirname, "products.json");
+
+const readDatabase = () => {
+  const fileAsBuffer = fs.readFileSync(productsFilePath);
+  const fileAsAString = fileAsBuffer.toString();
+  const productsArray = JSON.parse(fileAsAString);
+  return productsArray;
+};
+
+router.get("/", (req, res, next) => {
   try {
-    const productDataBase = await readDB(productFilePath); //RUNS FUNCTION TO GET DATABASE
-    if (productDataBase.length > 0) {
-      res.status(201).send(productDataBase); //SENDS RESPONSE WITH GOOD CODE AND WHOLE DATABSE
-    } else {
-      const err = {};
-      err.httpStatusCode = 404;
-      next(err);
-    }
+    const productsArray = readDatabase();
+
+    res.send(productsArray);
   } catch (err) {
     err.httpStatusCode = 404;
     next(err);
   }
 });
 
-router.get("/:id", async (req, res, next) => {
+router.get("/:id", (req, res, next) => {
   try {
-    const productDataBase = await readDB(productFilePath); //RUNS FUNCTION TO GET DATABASE
-    const singleproduct = productDataBase.filter(
-      (product) => product.ID === req.params.id
+    const productsArray = readDatabase();
+    const singleProduct = productsArray.filter(
+      (product) => product._id === req.params.id
     );
-    if (singleproduct.length > 0) {
-      res.status(201).send(singleproduct); //SENDS RESPONSE WITH GOOD CODE AND WHOLE DATABSE
-    } else {
-      const err = {};
-      err.httpStatusCode = 404;
-      next(err);
-    }
+
+    res.status(201).send(singleProduct);
   } catch (err) {
     err.httpStatusCode = 404;
     next(err);
   }
 });
 
-router.post(
-  "/",
-  [
-    check("name")
-      .exists()
-      .isLength({ min: 1 })
-      .withMessage("Give it a name, you bitch"),
-    check("description")
-      .exists()
-      .isLength({ min: 1 })
-      .withMessage("Gimmie a description man"),
-    check("brand")
-      .exists()
-      .isLength({ min: 1 })
-      .withMessage("You have to give a brand for the product"),
-    check("imageUrl")
-      .exists()
-      .isLength({ min: 1 })
-      .withMessage("You need to have a live demo of your product"),
-    check("price")
-      .exists()
-      .isLength({ min: 1 })
-      .withMessage("You need to set a price for your product"),
-    check("category")
-      .exists()
-      .isLength({ min: 1 })
-      .withMessage("The product must have a category to be placed on!"),
-  ],
-  async (req, res, next) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      const err = {};
-      err.message = errors;
-      err.httpStatusCode = 400;
-      next(err);
-    } else {
-      const productDataBase = await readDB(productFilePath);
-      const newproduct = req.body;
-      newproduct.ID = uniqid();
-      newproduct.CreationDate = new Date();
-      productDataBase.push(newproduct);
-      await writeDB(productFilePath, productDataBase);
-      res.status(201).send(productDataBase);
-    }
-  }
-);
-
-router.put("/:id", async (req, res, next) => {
+router.post("/", (req, res, next) => {
   try {
-    const productDataBase = await readDB(productFilePath); //RUNS FUNCTION TO GET DATABASE
-    const singleproduct = productDataBase.filter(
-      (product) => product.ID === req.params.id
+    const newProduct = req.body;
+    const productsArray = readDatabase();
+
+    newProduct._id = uniqid();
+    newProduct.createdAt = new Date();
+    newProduct.updatedAt = new Date();
+    productsArray.push(newProduct);
+    fs.writeFileSync(productsFilePath, JSON.stringify(productsArray));
+    res.status(201).send(newProduct);
+  } catch (err) {
+    err.httpStatusCode = 404;
+    next(err);
+  }
+});
+
+router.put("/:id", (req, res, next) => {
+  try {
+    const productsArray = readDatabase();
+    const singleProduct = productsArray.filter(
+      (product) => product._id === req.params.id
     );
-    if (singleproduct.length > 0) {
-      const filteredDB = productDataBase.filter(
-        (product) => product.ID !== req.params.id
+    const filteredArray = productsArray.filter(
+      (product) => product._id !== req.params.id
+    );
+
+    const editedProduct = req.body;
+    editedProduct._id = singleProduct[0]._id;
+    editedProduct.createdAt = singleProduct[0].createdAt;
+    editedProduct.updatedAt = new Date();
+    filteredArray.push(editedProduct);
+
+    fs.writeFileSync(productsFilePath, JSON.stringify(filteredArray));
+    res.status(201).send(editedProduct);
+  } catch (err) {
+    err.httpStatusCode = 404;
+    next(err);
+  }
+});
+
+router.delete("/:id", (req, res, next) => {
+  try {
+    const productsArray = readDatabase();
+    const singleProduct = productsArray.filter(
+      (product) => product._id === req.params.id
+    );
+    const filteredArray = productsArray.filter(
+      (product) => product._id !== req.params.id
+    );
+
+    const deletedProduct = req.body;
+    fs.writeFileSync(productsFilePath, JSON.stringify(filteredArray));
+    res.status(201).send(filteredArray);
+  } catch (err) {
+    err.httpStatusCode = 404;
+    next(err);
+  }
+});
+
+router.get("/:id/reviews", async (req, res, next) => {
+  try {
+    const reviewDataBase = await readDB(
+      path.join(__dirname, "../reviews/reviews.json")
+    );
+    if (reviewDataBase.length > 0) {
+      const productReviews = reviewDataBase.filter(
+        (review) => review.productID === req.params.id
       );
-      console.log(singleproduct);
-      const editedproduct = {
-        ...req.body,
-        ID: singleproduct[0].ID,
-        StudentID: singleproduct[0].StudentID,
-        CreationDate: singleproduct[0].CreationDate,
-        ModifiedDate: new Date(),
-      };
-      filteredDB.push(editedproduct);
-      await writeDB(productFilePath, filteredDB);
-      res.status(201).send(filteredDB); //SENDS RESPONSE WITH GOOD CODE AND WHOLE DATABSE
+      res.status(201).send(productReviews);
     } else {
       const err = {};
       err.httpStatusCode = 404;
-      next(err);
-    }
-  } catch (err) {
-    err.httpStatusCode = 404;
-    next(err);
-  }
-});
-
-router.delete("/:id", async (req, res, next) => {
-  try {
-    const productDataBase = await readDB(productFilePath); //RUNS FUNCTION TO GET DATABASE
-    const singleproduct = productDataBase.filter(
-      (product) => product.ID === req.params.id
-    );
-    if (singleproduct.length > 0) {
-      const filteredDB = productDataBase.filter(
-        (product) => product.ID !== req.params.id
-      );
-      await writeDB(productFilePath, filteredDB);
-      res.status(201).send(filteredDB); //SENDS RESPONSE WITH GOOD CODE AND WHOLE DATABSE
-    } else {
-      const err = {};
-      err.httpStatusCode = 404;
-      next(err);
+      err.message = "The review databse is empty!";
     }
   } catch (err) {
     err.httpStatusCode = 404;

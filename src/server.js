@@ -1,28 +1,38 @@
 const express = require("express");
+const cartsRoutes = require("./carts");
+const fileRoutes = require("./files/upload");
+const productsRouter = require("./products");
+const cors = require("cors");
+const { join } = require("path");
 const {
   notFoundHandler,
   unauthorizedHandler,
   forbiddenHandler,
+  badRequestHandler,
   catchAllHandler,
-} = require("./errorHandling");
-const productRoutes = require("./products");
+} = require("./lib/errorHandling");
 
 const server = express();
-const port = process.env.PORT || 3007;
+const port = 3077;
 
+server.use(cors());
 server.use(express.json());
-server.use("/products", productRoutes);
-server.use("/files", require("./files"));
-//importing the errorhandlers
+
+server.use(
+  "/images",
+  express.static(join(__dirname, "../public/img/products"))
+);
+
+server.use("/products", productsRouter);
+server.use("/carts", cartsRoutes);
+server.use("/files", fileRoutes);
+
 server.use(notFoundHandler);
 server.use(unauthorizedHandler);
 server.use(forbiddenHandler);
+server.use(badRequestHandler);
 server.use(catchAllHandler);
-//giving the port and a cute message to the console
+
 server.listen(port, () => {
-  console.log(
-    "Amazon server is running on port :",
-    process.env.PORT,
-    ", abadabbadul huhu"
-  );
+  console.log("Server running away on port: ", port);
 });
